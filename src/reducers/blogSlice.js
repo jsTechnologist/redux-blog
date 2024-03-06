@@ -7,13 +7,29 @@ const initialState = {
         id : nanoid(),
         date :  sub(new Date(),{days:2, minutes : 10}). toISOString(),
         title : "اولین پست ",
-        content : "محتوای اولین پست  😀 "
+        content : "محتوای اولین پست  😀 ",
+        user : "1",
+        reactions :{
+            thumpsup : 0 ,
+            hooray : 0 ,
+            heart : 0,
+            rocket : 0,
+            eyes : 0
+        }
     },
     {
         id : nanoid(),
         date : sub(new Date(),{minutes : 3}). toISOString(),
         title : "دومین پست ",
-        content : "محتوای دومین پست سلام زندگی   😚 "
+        content : "محتوای دومین پست سلام زندگی   😚 ",
+        user : "2",
+        reactions :{
+            thumpsup : 0 ,
+            hooray : 0 ,
+            heart : 0,
+            rocket : 0,
+            eyes : 0
+        }
     }
 ]
 };
@@ -24,11 +40,13 @@ const initialState = {
         reducers: {
             blogAdded: {
                 reducer (state,action) {state.blogs.push(action.payload) },
-                prepare (title , content) {
+                prepare (title , content , userId) {
                     return {payload : {
                         id: nanoid(),
+                        date : new Date().toISOString(),
                         title,
-                        content
+                        content,
+                        user : userId
                     }
                 }
              }
@@ -46,6 +64,14 @@ const initialState = {
             blogDeleted : (state , action) =>{
                const { id }=action.payload ;
                state.blogs = state.blogs.filter ((blog) =>blog.id !==id) ;
+            },
+            reactionAdded : (state ,action) =>{
+                const {blogId , reaction} = action .payload;
+                const existingBlog = state .blogs.find(blog=> blog.id ===blogId);
+
+                if(existingBlog) {
+                    existingBlog.reactions[reaction]++;
+                }
             }
        }
     });
@@ -54,5 +80,5 @@ const initialState = {
     export const selectBlogById = (state, blogId) =>
     state.blogs.blogs.find((blog) => blog.id === blogId);
 
-    export const {blogAdded , blogUpdated ,blogDeleted} = blogsSlice.actions;
+    export const {blogAdded , blogUpdated ,blogDeleted ,reactionAdded} = blogsSlice.actions;
     export default blogsSlice.reducer ;
