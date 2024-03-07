@@ -1,38 +1,23 @@
-import { createSlice , nanoid } from "@reduxjs/toolkit"; 
-import { newDate } from "date-fns-jalali";
-import {sub } from "date-fns-jalali";
+import { createAsyncThunk, createSlice , nanoid } from "@reduxjs/toolkit"; 
+import { createBlog, getAllBlogs } from "../services/blogsServices";
 const initialState = {
-    blogs:[
-    {
-        id : nanoid(),
-        date :  sub(new Date(),{days:2, minutes : 10}). toISOString(),
-        title : "اولین پست ",
-        content : "محتوای اولین پست  😀 ",
-        user : "-iB4k3I0fZ_VfBm4Zh9Jb",
-        reactions :{
-            thumpsup : 0 ,
-            hooray : 0 ,
-            heart : 0,
-            rocket : 0,
-            eyes : 0
-        }
-    },
-    {
-        id : nanoid(),
-        date : sub(new Date(),{minutes : 3}). toISOString(),
-        title : "دومین پست ",
-        content : "محتوای دومین پست سلام زندگی   😚 ",
-        user : "kS1DYxlVhlRw07aBt48OG",
-        reactions :{
-            thumpsup : 0 ,
-            hooray : 0 ,
-            heart : 0,
-            rocket : 0,
-            eyes : 0
-        }
-    }
-]
+    blogs: [],
+    status : "idle",
+    error : null
 };
+
+export const fetchBlogs = createAsyncThunk ( "blogs/fetchBlogs",async()=>{
+        const response =await getAllBlogs();
+        return response.data;
+    }
+) 
+
+export const addNewBlog = createAsyncThunk ("blogs/addNewBlog" ,async( initialBlog)=>{
+        const response =await createBlog(initialBlog);
+        return response.data;
+    }
+)
+
  const blogsSlice =createSlice (
     {
         name : "blogs",
@@ -46,7 +31,14 @@ const initialState = {
                         date : new Date().toISOString(),
                         title,
                         content,
-                        user : userId
+                        user : userId,
+                        reactions: {
+                            thumbsUp: 0,
+                            hooray: 0,
+                            heart: 0,
+                            rocket: 0,
+                            eyes: 0,
+                        }
                     }
                 }
              }
@@ -73,6 +65,23 @@ const initialState = {
                     existingBlog.reactions[reaction]++;
                 }
             }
+       },
+       extraReducers : (builder)=>{
+        builder
+        .addCase(fetchBlogs.pending , (state , action) =>{
+            state . status ="loading";
+        })
+        .addCase(fetchBlogs.fulfilled ,( state , action) =>{
+            state . status = "complated";
+            state .blogs = action .payload;
+        })
+        .addCase(fetchBlogs.rejected,(state ,action)=>{
+            state.status = "failed";
+            state .error = action .error.message;
+        })
+        .addCase(addNewBlog.fulfilled,(state ,action)=>{
+            state.blogs.push(action . payload);
+        })
        }
     });
     export const selectAllBlogs = (state) => state.blogs.blogs;
