@@ -1,5 +1,5 @@
-import { createAsyncThunk, createSlice , nanoid } from "@reduxjs/toolkit"; 
-import { createBlog, getAllBlogs } from "../services/blogsServices";
+import { createAsyncThunk, createSlice , nanoid ,current } from "@reduxjs/toolkit"; 
+import { createBlog, deleteBlog, getAllBlogs, updateBlog } from "../services/blogsServices";
 const initialState = {
     blogs: [],
     status : "idle",
@@ -11,6 +11,17 @@ export const fetchBlogs = createAsyncThunk ( "blogs/fetchBlogs",async()=>{
         return response.data;
     }
 ) 
+
+export const updateApiBlog =createAsyncThunk("blogs/updateBlogs",async(initialBlog)=>{
+       const response =await updateBlog (initialBlog.initialBlog.id);
+       return response .data;
+})
+
+export const deleteApiBlog = createAsyncThunk( "blogs/deleteApiBlog",async(initialBlogId) =>{
+    await deleteBlog(initialBlogId);
+    return initialBlogId;
+} 
+)
 
 export const addNewBlog = createAsyncThunk ("blogs/addNewBlog" ,async( initialBlog)=>{
         const response =await createBlog(initialBlog);
@@ -56,6 +67,8 @@ export const addNewBlog = createAsyncThunk ("blogs/addNewBlog" ,async( initialBl
             blogDeleted : (state , action) =>{
                const { id }=action.payload ;
                state.blogs = state.blogs.filter ((blog) =>blog.id !==id) ;
+               console.log(current(state));
+               console.log(state.blogs);
             },
             reactionAdded : (state ,action) =>{
                 const {blogId , reaction} = action .payload;
@@ -81,6 +94,15 @@ export const addNewBlog = createAsyncThunk ("blogs/addNewBlog" ,async( initialBl
         })
         .addCase(addNewBlog.fulfilled,(state ,action)=>{
             state.blogs.push(action . payload);
+        })
+        .addCase(deleteApiBlog.fulfilled,(state ,action)=>{
+            state.blogs = state.blogs.filter((blog) =>blog.id !==action.payload);
+        })
+        .addCase(updateApiBlog.fulfilled,(state ,action)=>{
+            const {id} = action . payload;
+            const updatedBlogIndex = state.blogs.findIndex(
+                (blog)=>blog.id===id)
+                state.blogs[updatedBlogIndex]=action.payload;
         })
        }
     });
